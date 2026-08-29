@@ -18,7 +18,7 @@ function App() {
         <div>
           <h1>Get started</h1>
           <p>
-            Edit <code>Hello!</code> and save to test <code>HMR</code>
+            Rocio was here! 
           </p>
         </div>
         <button
