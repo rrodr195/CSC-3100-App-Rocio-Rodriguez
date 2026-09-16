@@ -62,7 +62,6 @@ const findUserByNameAndJob = (name, job) => {
 }
 
 
-
 app.get("/users/:id", (req, res) => {
   const id = req.params["id"]; //or req.params.id
   let result = findUserById(id);
@@ -81,14 +80,19 @@ app.delete("/users/:id", (req, res) => {
     res.status(404).send("Resources not found"); 
   } else {
       users["users_list"] = users["users_list"].filter((user) => user["id"] !== id);
-      res.send();
+      res.status(204).send();
   }
 });
 
+function generateId() {
+  return Math.floor(Math.random() * 101000000).toString();
+}
+
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
+  userToAdd.id = generateId();
   addUser(userToAdd);
-  res.send();
+  res.status(201).send(userToAdd);
 });
 
 app.get("/users", (req, res) => {
