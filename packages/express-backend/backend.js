@@ -1,6 +1,24 @@
 // backend.js
 
-const users = {
+
+import cors from "cors";
+import express from "express";
+
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import userService from "./services/user-services.js";
+
+dotenv.config();
+
+const { MONGO_CONNECTION_STRING } = process.env;
+
+mongoose.set("debug", true);
+mongoose
+  .connect(MONGO_CONNECTION_STRING + "users") // connect to Db "users"
+  .catch((error) => console.log(error));
+
+
+/* const users = {
   users_list: [
     {
       id: "xyz789",
@@ -28,10 +46,7 @@ const users = {
       job: "Bartender",
     },
   ],
-};
-
-import cors from "cors";
-import express from "express";
+}; */
 
 const app = express();
 const port = 8000;
@@ -45,7 +60,7 @@ app.get("/", (req, res) => {
 
 
 
-const findUserByName = (name) => {
+/* const findUserByName = (name) => {
   return users["users_list"].filter((user) => user["name"] === name);
 };
 
@@ -59,59 +74,65 @@ const addUser = (user) => {
 
 const findUserByNameAndJob = (name, job) => {
   return findUserByName(name).filter((user) => user["job"] === job);
-}
+} */
 
 
 app.get("/users/:id", (req, res) => {
   const id = req.params["id"]; //or req.params.id
-  let result = findUserById(id);
-  if (result === undefined) {
-    res.status(404).send("Resource not found.");
-  } else {
-    res.send(result);
-  }
+
+  userService
+	.findUserById(id)
+	.then((result) => {
+	  if (!result) {
+            res.status(404).send("Resource not found.");
+	  } else {
+	      res.send(result);
+	  }
+	}) 
+	.catch((error) => res.status(500).send(error));
+	
 });
+
 
 app.delete("/users/:id", (req, res) => {
   const id = req.params["id"]; 
-  let result = findUserById(id)
-
-  if(result === undefined) {
-    res.status(404).send("Resources not found"); 
-  } else {
-      users["users_list"] = users["users_list"].filter((user) => user["id"] !== id);
-      res.status(204).send();
-  }
+ 
+    userService
+	.removeUser(id)
+	.then((result) => {
+	  if(!result) {
+            res.status(404).send("Resources not found"); 
+          } else {
+               res.status(204).send();
+	    }
+	})
+	.catch((error) => res.status(500).send(error));
 });
 
-function generateId() {
-  return Math.floor(Math.random() * 101000000).toString();
-}
+
 
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
-  userToAdd.id = generateId();
-  addUser(userToAdd);
-  res.status(201).send(userToAdd);
+
+  userService
+	.addUser(userToAdd)
+	.then((newUser) => {
+          res.status(201).send(newUser);
+	})
+	.catch((error) => res.status(500).send(error));
 });
 
 app.get("/users", (req, res) => {
   const name = req.query.name;
   const job = req.query.job; 
 
-  if(name != undefined && job != undefined) {
-     let result = findUserByNameAndJob(name, job);
-    result = { users_list: result };
-    res.send(result);
-  } else if (name != undefined) {
-    let result = findUserByName(name);
-    result = { users_list: result };
-    res.send(result);
-  } else {
-    res.send(users);
-  }
+  userService 
+	.getUsers(name, job)
+	.then((result) => {
+    	  res.send({users_list: result});
+  	})
+	.catch((error) => res.status(500).send(error));
 });
-
 
 
 
